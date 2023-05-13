@@ -30,12 +30,10 @@ namespace DynamicMeshCutter
                     //Debug.Log("min:"+red.bounds.min);
                 }
                 var roots = GameObject.FindGameObjectsWithTag("0");
-            foreach (GameObject root in roots)
-            {
-                //Debug.Log("tag:"+root.tag+root);
-                
-                
-            }
+                foreach (GameObject root in roots)
+                {
+                    //Debug.Log("tag:"+root.tag+root);
+                }
             }
             if (Input.GetMouseButtonDown(0))
             {
@@ -58,7 +56,7 @@ namespace DynamicMeshCutter
             if (Input.GetMouseButtonUp(0) && _isDragging)
             {
                 //Slice(3);
-                Slice(2);
+                Slice(20);
                 _isDragging = false;
             }
         }
@@ -102,7 +100,8 @@ namespace DynamicMeshCutter
                 }
                 if(Ytempmax>maxy){
                     maxy=Ytempmax;
-                }if (Ztempmin<minz){
+                }
+                if (Ztempmin<minz){
                     minz=Ztempmin;
                 }
                 if(Ztempmax>maxz){
@@ -142,7 +141,7 @@ namespace DynamicMeshCutter
                 var targets = root.GetComponentsInChildren<MeshTarget>();
                 foreach (var target in targets)
                 { 
-                    Cut(target, _to, plane.normal, null);
+                    Cut(target, _to, plane.normal, null,onCreated);
                 }
                 
             }
@@ -180,10 +179,6 @@ namespace DynamicMeshCutter
 
             // Set the material of the MeshRenderer to define the appearance of the plane
             meshRenderer.material = new Material(Shader.Find("Standard"));
-        }
-        void OnCreated(Info info, MeshCreationData cData)
-        {
-           MeshCreation.TranslateCreatedObjects(info, cData.CreatedObjects, cData.CreatedTargets, Separation);
         }
         private void VisualizeLine(bool value)
         {

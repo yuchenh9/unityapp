@@ -180,6 +180,7 @@ namespace DynamicMeshCutter
             var renderer = root.AddComponent<MeshRenderer>();
             var outline = root.AddComponent<Outline>();
             outline.eraseRenderer=false;
+            currentlist.Add(root);
             filter.mesh = mesh;
             renderer.materials = materials;
 

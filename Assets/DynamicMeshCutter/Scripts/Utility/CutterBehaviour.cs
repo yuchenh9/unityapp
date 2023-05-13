@@ -6,7 +6,7 @@ namespace DynamicMeshCutter
 {
 
     public delegate void OnCut(bool success, Info info); //after cut, before mesh creation
-    //public delegate void OnCreated(Info info, MeshCreationData creationData); //after original mesh target has been destroyed. after new meshes have been created and instantiate
+    public delegate void OnCreated(Info info, MeshCreationData creationData); //after original mesh target has been destroyed. after new meshes have been created and instantiate
     public class Info
     {
         //basic info
@@ -17,12 +17,12 @@ namespace DynamicMeshCutter
         public Mesh TargetOriginalMesh;
         public VirtualMesh TargetVirtualMesh;
         public Matrix4x4[] Bindposes;
-        public Info(MeshTarget target, VirtualPlane plane, OnCut onCut, object boxed)
+        public Info(MeshTarget target, VirtualPlane plane, OnCut onCut, OnCreated onCreated, object boxed)
         {
             this.MeshTarget = target;
             this.Plane = plane;
             OnCutCallback = onCut;
-            //OnCreatedCallback = onCreated;
+            OnCreatedCallback = onCreated;
             BoxedUserData = boxed;
 
             MeshCreation.GetMeshInfo(target, out TargetOriginalMesh, out Bindposes);
@@ -41,7 +41,7 @@ namespace DynamicMeshCutter
         public List<Vector3> LocalFaceCenters = new List<Vector3>();
         //callbacks
         public OnCut OnCutCallback;
-        //public OnCreated OnCreatedCallback;
+        public OnCreated OnCreatedCallback;
         public object BoxedUserData;
         public List<Vector3> GetWorldFaceCenters()
         {
@@ -56,7 +56,7 @@ namespace DynamicMeshCutter
 
     public abstract class CutterBehaviour : MonoBehaviour
     {
-        public float Separation = 0.02f;
+        public float Separation = 0f;
         [Tooltip("Automatically destroy the original object that is cut, when cut")]
         public bool DestroyTargets = true;
         [Tooltip("Use multiple threads to cut. Drastically reduces lag. Recommend ON")]
@@ -130,6 +130,10 @@ namespace DynamicMeshCutter
             _cutterIsEnabled = false;
             Terminate();    
         }
+        protected void onCreated(Info info, MeshCreationData cData)
+        {
+           MeshCreation.TranslateCreatedObjects(info, cData.CreatedObjects, cData.CreatedTargets, 0.002f);
+        }
         protected virtual void Update()
         {
             if (_successes.Count != 0)
@@ -173,8 +177,8 @@ namespace DynamicMeshCutter
             if(points.Count != 0){
                 Vector3 point = points.Dequeue();
                 Vector3 normal = normals.Dequeue();
-                GameObject[] roots = GameObject.FindGameObjectsWithTag("0");
-                foreach (GameObject root in roots)
+                //GameObject[] roots = GameObject.FindGameObjectsWithTag("0");
+                foreach (GameObject root in currentlist)
                 {
                      //Debug.Log("tag:"+root.tag+root);
                     if(root==null)
@@ -184,18 +188,14 @@ namespace DynamicMeshCutter
                     var targets = root.GetComponentsInChildren<MeshTarget>();
                     foreach (var target in targets)
                     { 
-                        Cut(target, point, normal, null);
+                        Debug.Log("abbbbb");
+                        Cut(target, point, normal, null,onCreated);
                     }
                 
                 }
             }
         }
-        private void OnCreated(Info info, MeshCreationData cData)
-        {
-            Debug.Log("oncreated");
-           MeshCreation.TranslateCreatedObjects(info, cData.CreatedObjects, cData.CreatedTargets, 1F);
-        }
-        public void Cut(MeshTarget target, Vector3 worldPosition, Vector3 worldNormal, OnCut onCut = null, object boxedUserData = null)
+        public void Cut(MeshTarget target, Vector3 worldPosition, Vector3 worldNormal, OnCut onCut = null,OnCreated onCreated = null, object boxedUserData = null)
         {
             //Debug.Log("Cut(6)x:"+worldPosition.x);
                 //Debug.Log(target);
@@ -230,9 +230,9 @@ namespace DynamicMeshCutter
             localN.Normalize();
 
             VirtualPlane plane = new VirtualPlane(localP, localN, worldPosition, worldNormal);
-            Info info = new Info(target, plane, onCut, boxedUserData);
+            Info info = new Info(target, plane, onCut, onCreated, boxedUserData);
 
-            //Debug.Log("a");
+            //Debug.Log(info);
 
             //if (!UseAsync)
             //{
@@ -272,7 +272,8 @@ namespace DynamicMeshCutter
         protected virtual void CreateGameObjects(Info info)
         {
             MeshCreationData creationInfo = MeshCreation.CreateObjects(info, DefaultMaterial, VertexCreationThreshold);
-
+            Debug.Log(info);
+            Debug.Log(creationInfo);
             if (DestroyTargets)
             {
                 if (info.MeshTarget)
@@ -299,13 +300,13 @@ namespace DynamicMeshCutter
                 }
                 else {
                     //Debug.Log(creationInfo.CreatedObjects[i]);
-                    Outline outline = creationInfo.CreatedObjects[i].GetComponent<Outline>();
-                    outline.eraseRenderer=false;
+                    //Outline outline = creationInfo.CreatedObjects[i].GetComponent<Outline>();
+                    //outline.eraseRenderer=false;//i solved bug by commenting this
                 }
             }
 
-            //info.OnCreatedCallback?.Invoke(info, creationInfo);
-            OnCreated(info,creationInfo);
+            info.OnCreatedCallback?.Invoke(info, creationInfo);
+            //OnCreated(info,creationInfo);
         }
         
         private void OnCut(bool success, Info info)
