@@ -174,13 +174,14 @@ namespace DynamicMeshCutter
             root.transform.position = target.transform.position;
             root.transform.rotation = target.transform.rotation;
             //root.gameObject.tag = target.transform.tag;
-            root.gameObject.tag ="0";
-         
+            
+            List<GameObject> currentlist = col.Instance.currentlist;
+            currentlist.Add(root.gameObject);
+            Debug.Log("Added"+root.gameObject);
             var filter = root.AddComponent<MeshFilter>();
             var renderer = root.AddComponent<MeshRenderer>();
             var outline = root.AddComponent<Outline>();
             outline.eraseRenderer=false;
-            currentlist.Add(root);
             filter.mesh = mesh;
             renderer.materials = materials;
 

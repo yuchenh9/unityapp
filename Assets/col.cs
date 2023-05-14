@@ -7,22 +7,48 @@ namespace DynamicMeshCutter
 	
 public class col : MonoBehaviour
 {
+	// Singleton instance
+        public static col Instance { get; private set; }
+
+        public List<GameObject> currentlist;
+ 		private void Awake()
+        {
+            if (Instance != null)
+            {
+                Debug.LogError("More than one instance of col found!");
+                return;
+            }
+
+            Instance = this;
+
+            // Initialization of other variables...
+        }
 	public static void AddOutline(GameObject target)
 	{
+		if(target != null) // check if the target is not null
+    {
 		Outline outline = target.GetComponent<Outline>();
 		if(outline==null)
 			outline=target.AddComponent<Outline>();
 		outline.eraseRenderer=false;
-
-		//Debug.Log("Add");
+	}else 
+    {
+        Debug.Log("Attempted to remove outline from a null GameObject.");
+    }
 
 	}
 	public static void RemoveOutline(GameObject target)
 	{
+		if(target != null) // check if the target is not null
+    {
 		Outline outline = target.GetComponent<Outline>();
 		if(outline==null)
 			outline=target.AddComponent<Outline>();
 		outline.eraseRenderer=true;
+	}else 
+    {
+        Debug.Log("Attempted to remove outline from a null GameObject.");
+    }
 
 	}
     // Start is called before the first frame update
@@ -35,7 +61,6 @@ public class col : MonoBehaviour
 		private List<float> positions;
 		private List<GameObject> instances; 	
 		List<List<GameObject>> listOfLists;
-		public List<GameObject> currentlist;
 		public Queue<GameObject> qCutmeshes;
 		GameObject bowl;
 		GameObject prefab;
@@ -50,18 +75,18 @@ public class col : MonoBehaviour
 				//Debug.Log(position);
 			}
 			positions.Add(position);
-			GameObject instance = Instantiate(prefab, new Vector3(position,-0.432f,2.225f), Quaternion.Euler(-89.98f,0f,180f));
+			GameObject instance = Instantiate(prefab, new Vector3(position,-0.238f,2.225f), Quaternion.Euler(-89.98f,0f,180f));
 			
             list1.Add(instance);
 			listOfLists.Add(list1);
-			GameObject bowladded = Instantiate(bowl, new Vector3(position,-0.631f,2.225f), Quaternion.Euler(-89.98f,0f,180f));
+			GameObject bowladded = Instantiate(bowl, new Vector3(position,-0.419f,2.225f), Quaternion.Euler(-89.98f,0f,180f));
 		}
 		private float yaw = 0f;
 		private float pitch = 0f;
 		void Start(){
 			
 			listOfLists = new List<List<GameObject>>();
-			mylist=new string[] {"steak","steak","chicken_breast","steak"};
+			mylist=new string[] {"carrot","steak"};
 			qCutmeshes = new Queue<GameObject>();
 			prefabDictionary = new Dictionary<string, GameObject>();
 			prefabnames=new string[] {"potato","carrot","tomato","cabbage","bell_pepper","steak","chicken_breast"};
@@ -97,9 +122,35 @@ public class col : MonoBehaviour
 			}
 		}
 		void Update()
-		{//col.cs update() begin
+		{
 			var camera = Camera.main.gameObject.transform;
 			Vector3 move = Vector3.zero;
+			/*
+			if (Input.GetKey(KeyCode.W))
+                Debug.Log("W");
+				move += MoveSpeed / 100f * Vector3.forward;
+			if (Input.GetKey(KeyCode.S))
+                Debug.Log("s");
+				move += MoveSpeed / 100f * Vector3.back;
+			if (Input.GetKey(KeyCode.A))
+                Debug.Log("a");
+				move += MoveSpeed / 100f * Vector3.left;
+			if (Input.GetKey(KeyCode.D))
+                Debug.Log("d");
+				move += MoveSpeed / 100f * Vector3.right;
+			if (Input.GetKey(KeyCode.Q))
+                Debug.Log("q");
+				move += MoveSpeed / 100f * Vector3.down;
+			if (Input.GetKey(KeyCode.E))
+                Debug.Log("e");
+				move += MoveSpeed / 100f * Vector3.up;
+
+			if (Input.GetKey(KeyCode.LeftShift))
+				move *= 5;
+
+			if (Mathf.Abs(move.sqrMagnitude) > Mathf.Epsilon)
+				camera.Translate(move, Space.Self);
+*/
 			
 			if (Input.GetKey(KeyCode.O))
             {    
@@ -147,7 +198,6 @@ public class col : MonoBehaviour
 				pitch -= Input.GetAxis("Mouse Y");
 				camera.eulerAngles = new Vector3(TurnSpeed * pitch, TurnSpeed * yaw, 0.0f);
 			}
-			//col.cs update() ends
 		}
 
 }

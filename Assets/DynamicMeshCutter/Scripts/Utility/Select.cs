@@ -18,16 +18,40 @@ namespace DynamicMeshCutter
                 if(outline==null)
                     outline=target.AddComponent<Outline>();
                 outline.eraseRenderer=false;
+                target.tag="0";
             } else {
                 Outline outline = target.GetComponent<Outline>();
                 if(outline==null)
                     outline=target.AddComponent<Outline>();
                 outline.eraseRenderer=true;
+                target.tag="Untagged";
             }
             //Debug.Log("Toggle:"+target.tag);
 
         }
+        public static void Add(GameObject target)
+        {
         
+                Outline outline = target.GetComponent<Outline>();
+                if(outline==null)
+                    outline=target.AddComponent<Outline>();
+                outline.eraseRenderer=true;
+                target.tag="Untagged";
+
+            //Debug.Log("Add");
+
+        }
+        public static void AddNext(GameObject target)
+        {
+
+
+        }
+
+        public static void Remove(GameObject target)
+        {
+
+
+        }
         public static void Clear(){
         }
     }
