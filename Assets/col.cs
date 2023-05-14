@@ -97,35 +97,9 @@ public class col : MonoBehaviour
 			}
 		}
 		void Update()
-		{
+		{//col.cs update() begin
 			var camera = Camera.main.gameObject.transform;
 			Vector3 move = Vector3.zero;
-			/*
-			if (Input.GetKey(KeyCode.W))
-                Debug.Log("W");
-				move += MoveSpeed / 100f * Vector3.forward;
-			if (Input.GetKey(KeyCode.S))
-                Debug.Log("s");
-				move += MoveSpeed / 100f * Vector3.back;
-			if (Input.GetKey(KeyCode.A))
-                Debug.Log("a");
-				move += MoveSpeed / 100f * Vector3.left;
-			if (Input.GetKey(KeyCode.D))
-                Debug.Log("d");
-				move += MoveSpeed / 100f * Vector3.right;
-			if (Input.GetKey(KeyCode.Q))
-                Debug.Log("q");
-				move += MoveSpeed / 100f * Vector3.down;
-			if (Input.GetKey(KeyCode.E))
-                Debug.Log("e");
-				move += MoveSpeed / 100f * Vector3.up;
-
-			if (Input.GetKey(KeyCode.LeftShift))
-				move *= 5;
-
-			if (Mathf.Abs(move.sqrMagnitude) > Mathf.Epsilon)
-				camera.Translate(move, Space.Self);
-*/
 			
 			if (Input.GetKey(KeyCode.O))
             {    
@@ -173,6 +147,7 @@ public class col : MonoBehaviour
 				pitch -= Input.GetAxis("Mouse Y");
 				camera.eulerAngles = new Vector3(TurnSpeed * pitch, TurnSpeed * yaw, 0.0f);
 			}
+			//col.cs update() ends
 		}
 
 }

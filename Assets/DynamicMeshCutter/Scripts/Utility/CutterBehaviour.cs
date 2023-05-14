@@ -1,14 +1,16 @@
 ﻿using System.Collections.Generic;
 using UnityEngine;
 using cakeslice;
-
+using System.Collections;
 namespace DynamicMeshCutter
 {
 
     public delegate void OnCut(bool success, Info info); //after cut, before mesh creation
     public delegate void OnCreated(Info info, MeshCreationData creationData); //after original mesh target has been destroyed. after new meshes have been created and instantiate
+    
     public class Info
     {
+        
         //basic info
         public MeshTarget MeshTarget;
         public VirtualPlane Plane;
@@ -56,6 +58,7 @@ namespace DynamicMeshCutter
 
     public abstract class CutterBehaviour : MonoBehaviour
     {
+        
         public float Separation = 0f;
         [Tooltip("Automatically destroy the original object that is cut, when cut")]
         public bool DestroyTargets = true;
@@ -194,7 +197,9 @@ namespace DynamicMeshCutter
                 
                 }
             }
+            
         }
+        
         public void Cut(MeshTarget target, Vector3 worldPosition, Vector3 worldNormal, OnCut onCut = null,OnCreated onCreated = null, object boxedUserData = null)
         {
             //Debug.Log("Cut(6)x:"+worldPosition.x);
