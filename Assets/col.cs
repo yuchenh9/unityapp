@@ -61,11 +61,48 @@ public class col : MonoBehaviour
 		private List<float> positions;
 		private List<GameObject> instances; 	
 		List<List<GameObject>> listOfLists;
+		private List<GameObject> bowls; 	
 		public Queue<GameObject> qCutmeshes;
 		GameObject bowl;
 		GameObject prefab;
+		Rigidbody rb;
 
 		private int cameraIndex=0;
+		public void TeleportGameObjects(List<GameObject> gameObjects, Vector3 newLocation)
+		{
+			if(gameObjects.Count == 0)
+			{
+				Debug.Log("No gameObjects to teleport.");
+				return;
+			}
+			GameObject referenceObject = null;
+			Vector3 oldLocation = Vector3.zero;
+			foreach(GameObject go in gameObjects)
+			{
+				// Get the difference between the GameObject's position and the old location
+				if(go!=null){
+					referenceObject=go;
+					oldLocation= referenceObject.transform.position;
+					break;
+				}
+			}
+			if(referenceObject==null){
+				Debug.Log("All gameobjs in currentlist are null");
+				return;
+			}
+			foreach(GameObject go in gameObjects)
+			{
+				if(go!=null){
+				// Get the difference between the GameObject's position and the old location
+				Vector3 diff = go.transform.position - oldLocation;
+
+				// Apply that difference to the new location
+				go.transform.position = newLocation + diff;
+
+				}
+			}
+		}
+
 		//(0,-0.432,2.225)
 		void addPreb(GameObject prefab){
 			List<GameObject> list1 = new List<GameObject>();
@@ -79,19 +116,20 @@ public class col : MonoBehaviour
 			
             list1.Add(instance);
 			listOfLists.Add(list1);
-			GameObject bowladded = Instantiate(bowl, new Vector3(position,-0.419f,2.225f), Quaternion.Euler(-89.98f,0f,180f));
+			GameObject bowladded = Instantiate(bowl, new Vector3(position,-0.419f,2.225f), Quaternion.Euler(-89.98f,-90f,180f));
+			bowls.Add(bowladded);
+			
 		}
 		private float yaw = 0f;
 		private float pitch = 0f;
 		void Start(){
-			
+			bowls=new List<GameObject>();
 			listOfLists = new List<List<GameObject>>();
 			mylist=new string[] {"carrot","steak"};
 			qCutmeshes = new Queue<GameObject>();
 			prefabDictionary = new Dictionary<string, GameObject>();
 			prefabnames=new string[] {"potato","carrot","tomato","cabbage","bell_pepper","steak","chicken_breast"};
 			positions = new List<float>();
-			instances = new List<GameObject>();////
 			bowl = Resources.Load<GameObject>("bowl");
 			for (int i = 0; i < prefabnames.Length; i++)
 			{
@@ -103,14 +141,18 @@ public class col : MonoBehaviour
 				addPreb(prefabDictionary[mylist[i]]);
 			}
 			var roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
-            foreach (GameObject root in roots)
-			{ 
-				//Select.Add(root);/////
-				//StartCoroutine(WaitOneFrame());
-
-			}
 			currentlist=listOfLists[0];
 		}
+		private Vector3 direction = Vector3.zero;
+		private void FixedUpdate()
+		{
+			// Apply the movement to the Rigidbody
+			if (rb != null)
+			{
+				rb.MovePosition(rb.position + direction * 0.01f * Time.fixedDeltaTime);
+			}
+		}
+
 		void RemoveAllOutlines(List<GameObject> list){
 			foreach (GameObject obj in list){
 				RemoveOutline(obj);
@@ -124,33 +166,18 @@ public class col : MonoBehaviour
 		void Update()
 		{
 			var camera = Camera.main.gameObject.transform;
-			Vector3 move = Vector3.zero;
-			/*
-			if (Input.GetKey(KeyCode.W))
-                Debug.Log("W");
-				move += MoveSpeed / 100f * Vector3.forward;
-			if (Input.GetKey(KeyCode.S))
-                Debug.Log("s");
-				move += MoveSpeed / 100f * Vector3.back;
-			if (Input.GetKey(KeyCode.A))
-                Debug.Log("a");
-				move += MoveSpeed / 100f * Vector3.left;
-			if (Input.GetKey(KeyCode.D))
-                Debug.Log("d");
-				move += MoveSpeed / 100f * Vector3.right;
-			if (Input.GetKey(KeyCode.Q))
-                Debug.Log("q");
-				move += MoveSpeed / 100f * Vector3.down;
-			if (Input.GetKey(KeyCode.E))
-                Debug.Log("e");
-				move += MoveSpeed / 100f * Vector3.up;
 
-			if (Input.GetKey(KeyCode.LeftShift))
-				move *= 5;
+			 direction = Vector3.zero;
 
-			if (Mathf.Abs(move.sqrMagnitude) > Mathf.Epsilon)
-				camera.Translate(move, Space.Self);
-*/
+        // Check for key press and determine direction
+			if (Input.GetKey(KeyCode.UpArrow))
+			{
+				direction = Vector3.right;
+			}
+			else if (Input.GetKey(KeyCode.DownArrow))
+			{
+				direction = Vector3.left;
+			}
 			
 			if (Input.GetKey(KeyCode.O))
             {    
@@ -162,13 +189,17 @@ public class col : MonoBehaviour
 				Debug.Log("O");
 			}
 			if (Input.GetKeyDown(KeyCode.L))
-            {    addPreb(bowl);
+            {    TeleportGameObjects(currentlist,new Vector3(0f,0f,0f));
 			}
 			if (Input.GetKeyDown(KeyCode.RightArrow))
             {     
+				//
+				//Debug.Log(rb);
 				if(cameraIndex<(positions.Count-1)){
 					cameraIndex=cameraIndex+1;
+					Debug.Log(cameraIndex);
 				}
+				rb = bowls[cameraIndex].GetComponent<Rigidbody>();
 				Transform cameraTransform = Camera.main.gameObject.transform;
 				RemoveAllOutlines(currentlist);
 				currentlist=listOfLists[cameraIndex];
@@ -180,9 +211,12 @@ public class col : MonoBehaviour
 			}
 			if (Input.GetKeyDown(KeyCode.LeftArrow))
             {   
+				//Debug.Log(rb);
 				if(cameraIndex>0){
 					cameraIndex=cameraIndex-1;
+					Debug.Log(cameraIndex);
 				}
+				rb = bowls[cameraIndex].GetComponent<Rigidbody>();
 				Transform cameraTransform = Camera.main.gameObject.transform;
 				RemoveAllOutlines(currentlist);
 				currentlist=listOfLists[cameraIndex];
