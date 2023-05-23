@@ -8,21 +8,21 @@ namespace DynamicMeshCutter
 public class col : MonoBehaviour
 {
 	// Singleton instance
-	public static col Instance { get; private set; }
+        public static col Instance { get; private set; }
 
-	public List<GameObject> currentlist;
-	private void Awake()
-	{
-		if (Instance != null)
-		{
-			Debug.LogError("More than one instance of col found!");
-			return;
-		}
+        public List<GameObject> currentlist;
+ 		private void Awake()
+        {
+            if (Instance != null)
+            {
+                Debug.LogError("More than one instance of col found!");
+                return;
+            }
 
-		Instance = this;
+            Instance = this;
 
-		// Initialization of other variables...
-	}
+            // Initialization of other variables...
+        }
 	public static void AddOutline(GameObject target)
 	{
 		if(target != null) // check if the target is not null
@@ -52,40 +52,23 @@ public class col : MonoBehaviour
 		}
 
 	}
-	
+    // Start is called before the first frame update
+		string[] prefabnames;
+		string[] mylist2;
+		Dictionary<string, GameObject> prefabDictionary;
+
 		public float TurnSpeed = 4.0f;      // Speed of camera turning when mouse moves in along an axis
 		public float MoveSpeed = 4.0f;      // Speed of the camera going back and forth
-		private float yaw = 0f;
-		private float pitch = 0f;
-		
-		private int cameraIndex=0;
-		//for scene init
-		string[] prefabnames;
-		string[] mylist;
-		Dictionary<string, GameObject> prefabDictionary;
 		private List<float> positions;
+		private List<GameObject> instances; 	
 		List<List<GameObject>> listOfLists;
 		private List<GameObject> bowls; 	
+		public Queue<GameObject> qCutmeshes;
 		GameObject bowl;
 		GameObject prefab;
 		Rigidbody rb;
-		//
-		public ref GameObject findAvalidGO(List<GameObject> gameObjects){
-			ref GameObject referenceObject=null;
-			foreach(GameObject go in gameObjects)
-			{
-				// Get the difference between the GameObject's position and the old location
-				if(go!=null){
-					referenceObject=go;
-					break;
-				}
-			}
-			if(referenceObject==null){
-				Debug.Log("All gameobjs in currentlist are null");
-			}
-			return ref referenceObject;
-		}
-		
+
+		private int cameraIndex=0;
 		public void TeleportGameObjects(List<GameObject> gameObjects, Vector3 newLocation)
 		{
 			if(gameObjects.Count == 0)
@@ -95,11 +78,19 @@ public class col : MonoBehaviour
 			}
 			GameObject referenceObject = null;
 			Vector3 oldLocation = Vector3.zero;
-			referenceObject= findAvalidGO(gameObjects);
+			foreach(GameObject go in gameObjects)
+			{
+				// Get the difference between the GameObject's position and the old location
+				if(go!=null){
+					referenceObject=go;
+					oldLocation= referenceObject.transform.position;
+					break;
+				}
+			}
 			if(referenceObject==null){
+				Debug.Log("All gameobjs in currentlist are null");
 				return;
 			}
-			oldLocation=referenceObject.transform.position;
 			foreach(GameObject go in gameObjects)
 			{
 				if(go!=null){
@@ -131,141 +122,105 @@ public class col : MonoBehaviour
 			bowls.Add(bowladded);
 			
 		}
-		void Start(){
-			//for fixedUpdata()
-			animationObjectLists=new List<List<GameObject>>();
-			animationTypes=new List<int>();// 0 for rigidbody, 1 for mesh only
-			animationRotateAxiss=new List<Vector3>();
-			rotateTargets=new List<Quaternion>();
-			moveTargets=new List<Vector3>();
-			animationTimes=new List<float>();
-			originalGOTransform=Vector3.zero;//need init
-			originalGORotation=Quaternion.identity;//need init
-			originalRBTransform=Vector3.zero;//need init
-			originalRBRotation=Quaternion.identity;//need init
+		
+		private float yaw = 0f;
+		private float pitch = 0f;
+		void addAnimation( string name,float time,GameObject obj,int index=99999,float rotateDegree=0f,Vector3 rotateAxis= default){
 			
-			//for scene init
+			if(!animationTimes.ContainsKey(name)){
+				rotateDegrees.Add(name,new List<float>());
+				animationObjectLists.Add(name,new List<List<GameObject>>());
+				animationRotateAxiss.Add(name,new List<Vector3>());
+				animationTimes.Add(name,new List<float>());
+			}
+			if(index>=animationTimes[name].Count){
+				rotateDegrees[name].Add(rotateDegree);
+				animationObjectLists[name].Add(new List<GameObject>());
+				animationObjectLists[name][animationObjectLists[name].Count-1].Add(obj);
+				animationRotateAxiss[name].Add(rotateAxis);
+				animationTimes[name].Add(time);
+			}
+			if(index<=0){
+				rotateDegrees[name].Insert(0, rotateDegree);
+				animationObjectLists[name].Insert(0, new List<GameObject>());
+				animationObjectLists[name][animationObjectLists[name].Count-1].Insert(0, obj);
+				animationRotateAxiss[name].Insert(0, rotateAxis);
+				animationTimes[name].Insert(0, time);
+			}
+		}
+		void Start(){
+
+
+
+
 			bowls=new List<GameObject>();
 			listOfLists = new List<List<GameObject>>();
-			mylist=new string[] {"carrot","potato","carrot"};
+			mylist2=new string[] {"carrot","potato"};
 			prefabDictionary = new Dictionary<string, GameObject>();
 			prefabnames=new string[] {"potato","carrot","tomato","cabbage","bell_pepper","steak","chicken_breast"};
 			positions = new List<float>();
 			bowl = Resources.Load<GameObject>("bowl");
-			//
 			for (int i = 0; i < prefabnames.Length; i++)
 			{
 				prefab = Resources.Load<GameObject>(prefabnames[i]);
 				prefabDictionary.Add(prefabnames[i], prefab);
 			}
-			for (int i = 0; i < mylist.Length; i++)
+			for (int i = 0; i < mylist2.Length; i++)
 			{
-				addPreb(prefabDictionary[mylist[i]]);
+				addPreb(prefabDictionary[mylist2[i]]);
 			}
 			var roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
 			currentlist=listOfLists[0];
+
+
+			rotateDegrees=new Dictionary<string, List<float>>();
+			animationObjectLists=new Dictionary<string, List<List<GameObject>>>();
+			animationRotateAxiss=new Dictionary<string, List<Vector3>>();
+			animationTimes=new Dictionary<string, List<float>>();
+			
+			addAnimation(obj:bowls[0],time:1f,name:"put",rotateDegree:170f,rotateAxis:Vector3.forward);
+			addAnimation(obj:bowls[0],time:0.5f,name:"put",rotateDegree:-170f,rotateAxis:Vector3.forward);
+
 		}
 		
-
-		private float timer=0f;
-		private Quaternion targetRotation;  // The target rotation to reach gradually
-		private float rotationSpeed = 160.0f; // The speed at which to rotate
-		private bool rbRotating=false;
+		private Vector3 direction = Vector3.zero;
 		private int animationIndex = -1;
-
-		private List<List<GameObject>> animationObjectLists;
-		private List<int> animationTypes;// 0 for rigidbody, 1 for mesh only
-
-		private List<Vector3> animationRotateAxiss;
-		private List<Quaternion> rotateTargets;
-
-		private List<Vector3> moveTargets;
-
-		private List<float> animationTimes;
-		private void SetAnimation(int index,int animationType,float time, List<GameObject> objs, Vector3 moveTarget, Quaternion rotateTarget, Vector3 rotateAxis){
-			if(index>=animationTimes.Count){
-				animationTimes.Add(time);
-				moveTargets.Add(moveTarget);
-				rotateTargets.Add(rotateTarget);
-				animationRotateAxiss.Add(rotateAxis);
-				animationTypes.Add(animationType);
-				animationObjectLists.Add(objs);
-			} else{
-				animationTimes[index]=(time);
-				moveTargets[index]=(moveTarget);
-				rotateTargets[index]=(rotateTarget);
-				animationRotateAxiss[index]=(rotateAxis);
-				animationTypes[index]=(animationType);
-				animationObjectLists[index]=(objs);
-			}
-
-		} 
-		private Vector3 originalGOTransform;
-		private Quaternion originalGORotation;
-		private Vector3 originalRBTransform;
-		private Quaternion originalRBRotation;
-		private void initAnimation(ref float timer,GameObject go, ref Vector3 originalGOTransform, ref Vector3 originalRBTransform, ref Quaternion originalGORotation, ref Quaternion originalRBRotation){
-			if(go==null){
-				Debug.Log("null gameobject");
-				return;
-			}
-			Rigidbody rb = go.GetComponent<Rigidbody>();
-			if(rb==null){
-				Debug.Log('null rb');
-			} else {
-				originalRBRotation=rb.rotation;
-				originalRBTransform=rb.position;
-			}
-			timer=0f;
-			originalGOTransform = go.transform.position;
-			originalRotation = go.transform.rotation;
-		}
+		
+		private string animationName;
+		
+		private Dictionary<string, List<List<GameObject>>> animationObjectLists;
+		private Dictionary<string, List<float>> rotateDegrees;
+		private Dictionary<string, List<Vector3>> animationRotateAxiss;
+		private Dictionary<string, List<float>> animationTimes;
+		private float timer=0f;
 		private void FixedUpdate()
 		{
-			if (animationIndex!=-1)
-			{
-				List<GameObject> objectList = animationObjectLists[animationIndex];
+			if(animationIndex!=-1){
+				
 				timer += Time.fixedDeltaTime;
-				if(timer>=animationTimes[animationIndex]){//if times up
+				if(timer>=animationTimes[animationName][animationIndex]){//init
 					animationIndex++;
-					if(animationIndex==animationTypes.Count){
+					timer=0f;
+					if(animationIndex==animationObjectLists[animationName].Count){
 						Debug.Log("end of animation");
 						animationIndex=-1;
 						return;
 					}
-					objectList = animationObjectLists[animationIndex];
-					initAnimation(ref timer, objectList[0],ref originalGOTransform,ref originalRBTransform,ref originalGORotation,ref originalRBRotation);
-				}
-				int animationType = animationTypes[animationIndex];
-				if (animationType==0)
-				{	
-					Rigidbody rb;
-					rb=objectList[0].GetComponent<Rigidbody>();//if animationType is 0, only move one rb in a animation//null
-					if(animationRotateAxiss[animationIndex]!=null){
-						Vector3 rotationAxis = transform.TransformDirection(animationRotateAxiss[animationIndex]); //Vector3.forward
-						// This can be changed to Vector3.right for x axis or Vector3.forward for z axis
-						// Create a rotation around the rotation axis
-						Quaternion differenceQuaternion = Quaternion.Inverse(originalRBRotation) * rotateTargets[animationIndex];
-
-						// Convert the difference quaternion to an angle representation
-						//float differenceAngle = Quaternion.Angle(rotation1, rotation2);
-						float rotationSpeed = differenceAngle/animationTimes[animationIndex]; // The speed at which to rotate
-						Quaternion rotation = Quaternion.AngleAxis(rotationSpeed * Time.fixedDeltaTime, rotationAxis);
 					
-						// Apply the rotation to the Rigidbody
-						//(270.16, 277.12, 262.88)=(x,...,...) x++, when x==360,x=0,when x==0, bowl is D
-						rb.rotation = rotation * rb.rotation;//rb
-					}
-				} else if(animationType==1) {
-					public Vector3 targetPosition;
-					public float moveSpeed = 5.0f;
-					ref GameObject referenceObject = findAvalidGO(objectList);
-					originalGOTransform=referenceObject.transform.position;
-					Vector3 moveSpeed=(moveTargets[animationIndex]-originalGOTransform)/animationTimes[animationIndex];
-					Vector3 newLocation=originalGOTransform+moveSpeed*timer;
-					TeleportGameObjects(objectList,newLocation);
 				}
-			
+				rb=animationObjectLists[animationName][animationIndex][0].GetComponent<Rigidbody>();//init
+				
+				float rotationSpeed=rotateDegrees[animationName][animationIndex]/animationTimes[animationName][animationIndex];//init
+
+				Vector3 rotationAxis = transform.TransformDirection(animationRotateAxiss[animationName][animationIndex]); 
+				
+				Quaternion rotation = Quaternion.AngleAxis(rotationSpeed * Time.fixedDeltaTime, rotationAxis);
+
+				//(270.16, 277.12, 262.88)=(x,...,...) x++, when x==360,x=0,when x==0, bowl is D
+				rb.rotation = rotation * rb.rotation;
+				//Debug.Log(rb.rotation.eulerAngles.x);//the logged result is (-0.58886, 0.39124, 0.39138, -0.58907)
+				
+				
 			}
 		}
 
@@ -279,52 +234,42 @@ public class col : MonoBehaviour
 				AddOutline(obj);
 			}
 		}
-		void PutToBowl(int toIndex){//working
+		void PutToBowl(int toIndex){
 			currentlist.Add(bowls[cameraIndex]);
 			TeleportGameObjects(currentlist,new Vector3((float)(positions[toIndex]+0.06), (float)-0.16, (float)2.225));
 			currentlist.RemoveAt(currentlist.Count - 1);
-			//targetRotation = Quaternion.Euler(0f, -90f, 0f);
-			
-			//rb=bowls[cameraIndex].GetComponent<Rigidbody>();
-			List<GameObject> vessels=new List<GameObject>();
-			vessels.Add(bowls[cameraIndex]);
-			//rbRotating=true;
+			Transform cameraTransform = Camera.main.gameObject.transform;
+			cameraTransform.position = new Vector3((float)(positions[toIndex]), (float)0.946, (float)0.514);
+			cameraTransform.rotation = Quaternion.Euler((float)34.541, (float)0,(float)0);
+
+			rb=bowls[cameraIndex].GetComponent<Rigidbody>();
 			foreach (GameObject item in currentlist)
 			{
 				listOfLists[toIndex].Add(item);
+				
 			}
+
+			animationName="put";
+
 			
-			cameraIndex=toIndex;
-			sceneTransition(cameraIndex);	
-			SetAnimation(99,0,1f,vessels,null,Quaternion.Euler((float)34.541, (float)100,(float)90),Vector3.right);
-			//SetAnimation(int index,int animationType,float time, List<GameObject> objs, Vector3 moveTarget, Quaternion rotateTarget, Vector3 rotateAxis){
-		}
-		void sceneTransition(int toCameraIndex){
-				Transform cameraTransform = Camera.main.gameObject.transform;
-				RemoveAllOutlines(currentlist);
-				currentlist=listOfLists[toCameraIndex];
-				AddAllOutlines(currentlist);
-        		// Set the position and rotation of the camera
-				cameraTransform.position = new Vector3((float)positions[toCameraIndex], (float)0.746, (float)0.514);
-				cameraTransform.rotation = Quaternion.Euler((float)34.541, (float)0,(float)0);
-				//Debug.Log("P");
+
+
+			animationIndex=0;
 			}
 		void Update()
 		{
 			var camera = Camera.main.gameObject.transform;
 
-			 //direction = Vector3.zero;
+			 direction = Vector3.zero;
 
         // Check for key press and determine direction
 			if (Input.GetKey(KeyCode.UpArrow))
 			{
-
-
-				//direction = Vector3.right;
+				direction = Vector3.right;
 			}
 			else if (Input.GetKey(KeyCode.DownArrow))
 			{
-				//direction = Vector3.left;
+				direction = Vector3.left;
 			}
 			
 			if (Input.GetKey(KeyCode.O))
@@ -348,10 +293,20 @@ public class col : MonoBehaviour
 					Debug.Log(cameraIndex);
 				}
 				rb = bowls[cameraIndex].GetComponent<Rigidbody>();
-				sceneTransition(cameraIndex);
+				Transform cameraTransform = Camera.main.gameObject.transform;
+				RemoveAllOutlines(currentlist);
+				currentlist=listOfLists[cameraIndex];
+				AddAllOutlines(currentlist);
+				
+				foreach (GameObject item in currentlist)
+				{
+					Debug.Log(item);
+				}
+        		// Set the position and rotation of the camera
+				cameraTransform.position = new Vector3((float)positions[cameraIndex], (float)0.746, (float)0.514);
+				cameraTransform.rotation = Quaternion.Euler((float)34.541, (float)0,(float)0);
 				//Debug.Log("P");
 			}
-			
 			if (Input.GetKeyDown(KeyCode.LeftArrow))
             {   
 				//Debug.Log(rb);
@@ -360,8 +315,15 @@ public class col : MonoBehaviour
 					Debug.Log(cameraIndex);
 				}
 				rb = bowls[cameraIndex].GetComponent<Rigidbody>();
+				Transform cameraTransform = Camera.main.gameObject.transform;
+				RemoveAllOutlines(currentlist);
+				currentlist=listOfLists[cameraIndex];
+				AddAllOutlines(currentlist);
+        		// Set the position and rotation of the camera
+				cameraTransform.position = new Vector3((float)positions[cameraIndex], (float)0.746, (float)0.514);
+				cameraTransform.rotation = Quaternion.Euler((float)34.541, (float)0,(float)0);
+				//Debug.Log("P");
 				
-				sceneTransition(cameraIndex);
 			}
 			if (Input.GetMouseButton(2))
 			{
@@ -370,5 +332,6 @@ public class col : MonoBehaviour
 				camera.eulerAngles = new Vector3(TurnSpeed * pitch, TurnSpeed * yaw, 0.0f);
 			}
 		}
-	}
+
+}
 }
