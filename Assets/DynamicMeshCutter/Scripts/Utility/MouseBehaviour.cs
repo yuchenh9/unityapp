@@ -10,6 +10,21 @@ namespace DynamicMeshCutter
     [RequireComponent(typeof(LineRenderer))]
     public class MouseBehaviour : CutterBehaviour
     {
+        
+        public static MouseBehaviour Instance { get; private set; } 
+
+        private void Awake()
+        {
+            if (Instance == null)
+            {
+                Instance = this;
+                DontDestroyOnLoad(gameObject); // Optionally keep this object alive when changing scenes
+            }
+            else
+            {
+                Destroy(gameObject);
+            }
+        }
         public LineRenderer LR => GetComponent<LineRenderer>();
         private Vector3 _from;
         private Vector3 _to;
@@ -30,7 +45,7 @@ namespace DynamicMeshCutter
                     //Debug.Log("max:"+red.bounds.max);
                     //Debug.Log("min:"+red.bounds.min);
                 }
-                 List<GameObject> currentlist = col.Instance.currentlist;
+                List<GameObject> currentlist = col.Instance.currentlist;
                 foreach (GameObject root in currentlist)//
                 {
                     //Debug.Log("tag:"+root.tag+root);
@@ -42,7 +57,7 @@ namespace DynamicMeshCutter
                 var mousePos = new Vector3(Input.mousePosition.x, Input.mousePosition.y, Camera.main.nearClipPlane + 0.05f);
                 _from = Camera.main.ScreenToWorldPoint(mousePos);
             }
-
+/*
             if (_isDragging)
             {
                 var mousePos = new Vector3(Input.mousePosition.x, Input.mousePosition.y, Camera.main.nearClipPlane + 0.05f);
@@ -53,11 +68,11 @@ namespace DynamicMeshCutter
             {
                 VisualizeLine(false);
             }
-
-            if (Input.GetMouseButtonUp(0) && _isDragging)
+*/
+            if (Input.GetMouseButtonUp(0))
             {
                 //Slice(3);
-                Slice(15);
+                Slice(6);
                 _isDragging = false;
             }
         }
@@ -65,7 +80,7 @@ namespace DynamicMeshCutter
 
 
 
-        private void Slice(int n){
+        public void Slice(int n){
             while (GameObject.Find("plane")!=null){
                 GameObject gameObject=GameObject.Find("plane");
                 Destroy(gameObject,0);

@@ -7,22 +7,50 @@ namespace DynamicMeshCutter
 	
 public class col : MonoBehaviour
 {
+
 	// Singleton instance
-        public static col Instance { get; private set; }
+	public static col Instance { get; private set; }
 
-        public List<GameObject> currentlist;
- 		private void Awake()
-        {
-            if (Instance != null)
-            {
-                Debug.LogError("More than one instance of col found!");
-                return;
-            }
+	public List<GameObject> currentlist;
+	private void Awake()
+	{
+		if (Instance != null)
+		{
+			Debug.LogError("More than one instance of col found!");
+			return;
+		}
 
-            Instance = this;
+		Instance = this;
 
-            // Initialization of other variables...
-        }
+		// Initialization of other variables...
+	}
+	public void ReactConnected(){
+		Debug.Log("unity connected");
+	}
+	public void ReactSlice(int n){
+		MouseBehaviour.Instance.Slice(n);
+	}
+	public void ReactScroll (int index) {
+		if(index>=positions.Count){
+			Debug.Log("Error!index="+index+"positions.Count="+positions.Count);
+			return;
+		}
+		if(index<0){
+			Debug.Log("Error!index="+index);
+			return;
+		}
+			cameraIndex=index;
+			//rb = bowls[cameraIndex].GetComponent<Rigidbody>();
+			Transform cameraTransform = Camera.main.gameObject.transform;
+			RemoveAllOutlines(currentlist);
+			currentlist=listOfLists[cameraIndex];
+			AddAllOutlines(currentlist);
+			
+			
+			// Set the position and rotation of the camera
+			cameraTransform.position = new Vector3((float)positions[cameraIndex], (float)0.746, (float)0.514);
+			cameraTransform.rotation = Quaternion.Euler((float)34.541, (float)0,(float)0);
+	}
 	public static void AddOutline(GameObject target)
 	{
 		if(target != null) // check if the target is not null
@@ -52,6 +80,8 @@ public class col : MonoBehaviour
 		}
 
 	}
+	
+		bool hasLoaded;		
     // Start is called before the first frame update
 		string[] prefabnames;
 		string[] mylist2;
@@ -65,8 +95,24 @@ public class col : MonoBehaviour
 		private List<GameObject> bowls; 	
 		public Queue<GameObject> qCutmeshes;
 		GameObject bowl;
+		GameObject pan;
 		GameObject prefab;
 		Rigidbody rb;
+
+
+		private Vector3 direction = Vector3.zero;
+		private int animationIndex = -1;
+		
+		private string animationName;
+		
+		private Dictionary<string, List<List<GameObject>>> animationObjectLists;
+		private Dictionary<string, List<float>> rotateDegrees;
+		private Dictionary<string, List<Vector3>> animationRotateAxiss;
+		private Dictionary<string, List<float>> animationTimes;
+		private float timer=0f;
+		private float yaw = 0f;
+		private float pitch = 0f;
+
 
 		private int cameraIndex=0;
 		public void TeleportGameObjects(List<GameObject> gameObjects, Vector3 newLocation)
@@ -105,27 +151,27 @@ public class col : MonoBehaviour
 		}
 
 		//(0,-0.432,2.225)
-		void addPreb(GameObject prefab){
+		void addPrefabAndBowl(GameObject prefab){
 			List<GameObject> list1 = new List<GameObject>();
 			var position = 2.722f;
 			if(positions.Count!=0){
 				position=positions[positions.Count-1]+0.6f;
-				//Debug.Log(position);
 			}
 			positions.Add(position);
+			if(prefab==null){
+				Debug.Log("prefab is null");
+			} else {
 			GameObject instance = Instantiate(prefab, new Vector3(position,-0.238f,2.225f), Quaternion.Euler(-89.98f,0f,180f));
 			
             list1.Add(instance);
+			}
 			listOfLists.Add(list1);
 			GameObject bowladded = Instantiate(bowl, new Vector3(position,-0.419f,2.225f), Quaternion.Euler(-89.98f,0f,180f));
 			
 			bowls.Add(bowladded);
 			
 		}
-		
-		private float yaw = 0f;
-		private float pitch = 0f;
-		void addAnimation( string name,float time,GameObject obj,int index=99999,float rotateDegree=0f,Vector3 rotateAxis= default){
+		void addAnimation( string name,float time,int index=99999,float rotateDegree=0f,Vector3 rotateAxis= default){
 			
 			if(!animationTimes.ContainsKey(name)){
 				rotateDegrees.Add(name,new List<float>());
@@ -136,68 +182,73 @@ public class col : MonoBehaviour
 			if(index>=animationTimes[name].Count){
 				rotateDegrees[name].Add(rotateDegree);
 				animationObjectLists[name].Add(new List<GameObject>());
-				animationObjectLists[name][animationObjectLists[name].Count-1].Add(obj);
+				//animationObjectLists[name][animationObjectLists[name].Count-1].Add(obj);
 				animationRotateAxiss[name].Add(rotateAxis);
 				animationTimes[name].Add(time);
 			}
 			if(index<=0){
 				rotateDegrees[name].Insert(0, rotateDegree);
 				animationObjectLists[name].Insert(0, new List<GameObject>());
-				animationObjectLists[name][animationObjectLists[name].Count-1].Insert(0, obj);
+				//animationObjectLists[name][animationObjectLists[name].Count-1].Insert(0, obj);
 				animationRotateAxiss[name].Insert(0, rotateAxis);
 				animationTimes[name].Insert(0, time);
 			}
 		}
-		void Start(){
+		void Start()
+		{
+		hasLoaded = false;
+		Debug.Log("hasLoaded set to false");
 
+		positions=new List<float>();
+		Debug.Log("positions initialized");
 
+		bowls=new List<GameObject>();
+		Debug.Log("bowls initialized");
 
+		listOfLists = new List<List<GameObject>>();
+		Debug.Log("listOfLists initialized");
 
-			bowls=new List<GameObject>();
-			listOfLists = new List<List<GameObject>>();
-			mylist2=new string[] {"carrot","potato"};
-			prefabDictionary = new Dictionary<string, GameObject>();
-			prefabnames=new string[] {"potato","carrot","tomato","cabbage","bell_pepper","steak","chicken_breast"};
-			positions = new List<float>();
-			bowl = Resources.Load<GameObject>("bowl");
-			for (int i = 0; i < prefabnames.Length; i++)
-			{
-				prefab = Resources.Load<GameObject>(prefabnames[i]);
-				prefabDictionary.Add(prefabnames[i], prefab);
-			}
-			for (int i = 0; i < mylist2.Length; i++)
-			{
-				addPreb(prefabDictionary[mylist2[i]]);
-			}
-			var roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
-			currentlist=listOfLists[0];
+		mylist2=new string[] {"carrot","steak"};
+		Debug.Log("mylist2 initialized");
 
+		bowl = Resources.Load<GameObject>("bowl");
+		Debug.Log("bowl loaded");
+		//pan=Resources.Load<GameObject>("pan");
+		var roots = UnityEngine.SceneManagement.SceneManager.GetActiveScene().GetRootGameObjects();
+		Debug.Log("roots retrieved");
 
-			rotateDegrees=new Dictionary<string, List<float>>();
-			animationObjectLists=new Dictionary<string, List<List<GameObject>>>();
-			animationRotateAxiss=new Dictionary<string, List<Vector3>>();
-			animationTimes=new Dictionary<string, List<float>>();
-			
-			addAnimation(obj:bowls[0],time:1f,name:"put",rotateDegree:170f,rotateAxis:Vector3.forward);
-			addAnimation(obj:bowls[0],time:0.5f,name:"put",rotateDegree:-170f,rotateAxis:Vector3.forward);
+		//currentlist=listOfLists[0];
+		Debug.Log("currentlist set");
 
+		rotateDegrees=new Dictionary<string, List<float>>();
+		Debug.Log("rotateDegrees initialized");
+
+		animationObjectLists=new Dictionary<string, List<List<GameObject>>>();
+		Debug.Log("animationObjectLists initialized");
+
+		animationRotateAxiss=new Dictionary<string, List<Vector3>>();
+		Debug.Log("animationRotateAxiss initialized");
+
+		animationTimes=new Dictionary<string, List<float>>();
+		Debug.Log("animationTimes initialized");
+
+		addAnimation(time:0.6f,name:"put",rotateDegree:130f,rotateAxis:Vector3.forward);
+		Debug.Log("First animation added");
+
+		addAnimation(time:0.3f,name:"put",rotateDegree:-130f,rotateAxis:Vector3.forward);
+		Debug.Log("Second animation added");
 		}
+
 		
-		private Vector3 direction = Vector3.zero;
-		private int animationIndex = -1;
 		
-		private string animationName;
-		
-		private Dictionary<string, List<List<GameObject>>> animationObjectLists;
-		private Dictionary<string, List<float>> rotateDegrees;
-		private Dictionary<string, List<Vector3>> animationRotateAxiss;
-		private Dictionary<string, List<float>> animationTimes;
-		private float timer=0f;
 		private void FixedUpdate()
 		{
 			if(animationIndex!=-1){
 				
 				timer += Time.fixedDeltaTime;
+				Debug.Log(animationName+animationIndex);
+				Debug.Log(animationTimes==null);
+				//Debug.Log("b"+animationTimes[animationName][animationIndex]);
 				if(timer>=animationTimes[animationName][animationIndex]){//init
 					animationIndex++;
 					timer=0f;
@@ -208,7 +259,7 @@ public class col : MonoBehaviour
 					}
 					
 				}
-				rb=animationObjectLists[animationName][animationIndex][0].GetComponent<Rigidbody>();//init
+				//rb=animationObjectLists[animationName][animationIndex][0].GetComponent<Rigidbody>();//init
 				
 				float rotationSpeed=rotateDegrees[animationName][animationIndex]/animationTimes[animationName][animationIndex];//init
 
@@ -241,23 +292,33 @@ public class col : MonoBehaviour
 			Transform cameraTransform = Camera.main.gameObject.transform;
 			cameraTransform.position = new Vector3((float)(positions[toIndex]), (float)0.946, (float)0.514);
 			cameraTransform.rotation = Quaternion.Euler((float)34.541, (float)0,(float)0);
-
 			rb=bowls[cameraIndex].GetComponent<Rigidbody>();
 			foreach (GameObject item in currentlist)
 			{
 				listOfLists[toIndex].Add(item);
-				
 			}
 
 			animationName="put";
-
-			
-
-
 			animationIndex=0;
+			
+			RemoveAllOutlines(currentlist);
+			currentlist=listOfLists[toIndex];
+			AddAllOutlines(currentlist);
+			cameraIndex=toIndex;
 			}
 		void Update()
 		{
+			if (!hasLoaded && (BundleLoader.Instance?.IsLoaded ?? false))
+			{
+				for (int i = 0; i < mylist2.Length; i++)
+				{
+					addPrefabAndBowl(BundleLoader.Instance.Prefabs[mylist2[i]]);
+				}
+				hasLoaded = true;
+			}
+				
+        
+
 			var camera = Camera.main.gameObject.transform;
 
 			 direction = Vector3.zero;
@@ -282,17 +343,16 @@ public class col : MonoBehaviour
 			}
 			if (Input.GetKeyDown(KeyCode.P))
             {
-				PutToBowl(1);
+				PutToBowl(cameraIndex+1);
 			}
 			if (Input.GetKeyDown(KeyCode.RightArrow))
             {     
-				//
 				//Debug.Log(rb);
 				if(cameraIndex<(positions.Count-1)){
 					cameraIndex=cameraIndex+1;
 					Debug.Log(cameraIndex);
 				}
-				rb = bowls[cameraIndex].GetComponent<Rigidbody>();
+				//rb = bowls[cameraIndex].GetComponent<Rigidbody>();
 				Transform cameraTransform = Camera.main.gameObject.transform;
 				RemoveAllOutlines(currentlist);
 				currentlist=listOfLists[cameraIndex];
@@ -331,6 +391,12 @@ public class col : MonoBehaviour
 				pitch -= Input.GetAxis("Mouse Y");
 				camera.eulerAngles = new Vector3(TurnSpeed * pitch, TurnSpeed * yaw, 0.0f);
 			}
+			if (Input.GetMouseButtonUp(0))
+            {
+                //Slice(3);
+                ReactSlice(6);
+                //_isDragging = false;
+            }
 		}
 
 }
