@@ -24,6 +24,16 @@ public class col : MonoBehaviour
 
 		// Initialization of other variables...
 	}
+	public void ReactAddPrefab(string name){
+		if ((BundleLoader.Instance?.IsLoaded ?? false))
+		{	
+			if(BundleLoader.Instance.Prefabs.ContainsKey(name)){
+				addPrefabAndBowl(BundleLoader.Instance.Prefabs[name]);
+			} else {
+				Debug.Log(name+" is not contained in Prefabs");
+			}
+		}
+	}
 	public void ReactConnected(){
 		Debug.Log("unity connected");
 	}
@@ -31,15 +41,17 @@ public class col : MonoBehaviour
 		MouseBehaviour.Instance.Slice(n);
 	}
 	public void ReactScroll (int index) {
-		if(index>=positions.Count){
-			Debug.Log("Error!index="+index+"positions.Count="+positions.Count);
+		if(index!=1&&index!=-1){
+			Debug.Log("index should be 1 or -1");
 			return;
 		}
-		if(index<0){
-			Debug.Log("Error!index="+index);
-			return;
+		cameraIndex=cameraIndex+index;
+		if(cameraIndex<0){
+			cameraIndex=0;
 		}
-			cameraIndex=index;
+		if(cameraIndex>positions.Count-1){
+			cameraIndex=positions.Count-1;
+		}
 			//rb = bowls[cameraIndex].GetComponent<Rigidbody>();
 			Transform cameraTransform = Camera.main.gameObject.transform;
 			RemoveAllOutlines(currentlist);
@@ -151,7 +163,7 @@ public class col : MonoBehaviour
 		}
 
 		//(0,-0.432,2.225)
-		void addPrefabAndBowl(GameObject prefab){
+		public void addPrefabAndBowl(GameObject prefab){
 			List<GameObject> list1 = new List<GameObject>();
 			var position = 2.722f;
 			if(positions.Count!=0){
@@ -239,8 +251,6 @@ public class col : MonoBehaviour
 		Debug.Log("Second animation added");
 		}
 
-		
-		
 		private void FixedUpdate()
 		{
 			if(animationIndex!=-1){
