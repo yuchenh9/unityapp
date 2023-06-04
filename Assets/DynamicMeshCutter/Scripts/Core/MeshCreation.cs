@@ -180,8 +180,10 @@ namespace DynamicMeshCutter
             Debug.Log("Added"+root.gameObject);
             var filter = root.AddComponent<MeshFilter>();
             var renderer = root.AddComponent<MeshRenderer>();
-            var outline = root.AddComponent<Outline>();
+            if(!(col.Instance.build)){
+                var outline = root.AddComponent<Outline>();
             outline.eraseRenderer=false;
+            }
             filter.mesh = mesh;
             renderer.materials = materials;
 

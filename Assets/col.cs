@@ -10,7 +10,7 @@ public class col : MonoBehaviour
 
 	// Singleton instance
 	public static col Instance { get; private set; }
-
+	public bool build;
 	public List<GameObject> currentlist;
 	private void Awake()
 	{
@@ -21,13 +21,14 @@ public class col : MonoBehaviour
 		}
 
 		Instance = this;
-
+		build=true;
 		// Initialization of other variables...
 	}
 	public void ReactAddPrefab(string name){
 		if ((BundleLoader.Instance?.IsLoaded ?? false))
 		{	
 			if(BundleLoader.Instance.Prefabs.ContainsKey(name)){
+				Debug.Log("addPrefabAndBowl "+name);
 				addPrefabAndBowl(BundleLoader.Instance.Prefabs[name]);
 			} else {
 				Debug.Log(name+" is not contained in Prefabs");
@@ -52,6 +53,11 @@ public class col : MonoBehaviour
 		if(cameraIndex>positions.Count-1){
 			cameraIndex=positions.Count-1;
 		}
+		if(listOfLists[cameraIndex].Count==0){
+			Debug.Log("scrolling to an index with empty list");
+			return;
+		}
+		Debug.Log("unity ReactScroll:"+index);
 			//rb = bowls[cameraIndex].GetComponent<Rigidbody>();
 			Transform cameraTransform = Camera.main.gameObject.transform;
 			RemoveAllOutlines(currentlist);
@@ -61,7 +67,33 @@ public class col : MonoBehaviour
 			
 			// Set the position and rotation of the camera
 			cameraTransform.position = new Vector3((float)positions[cameraIndex], (float)0.746, (float)0.514);
-			cameraTransform.rotation = Quaternion.Euler((float)34.541, (float)0,(float)0);
+			cameraTransform.rotation = Quaternion.Euler((float)30.72, (float)0,(float)0);
+	}
+	//below is a method that has the same purpose with ReactScroll
+	public void ReactScrollTo (int index) {
+		if(index<0||index>positions.Count-1){
+			Debug.Log("index out of range:"+index);
+			return;
+		}
+		cameraIndex=index;
+		Debug.Log("ReactScrollTo index:"+index);
+			//rb = bowls[cameraIndex].GetComponent<Rigidbody>();
+			Transform cameraTransform = Camera.main.gameObject.transform;
+			RemoveAllOutlines(currentlist);
+			currentlist=listOfLists[cameraIndex];
+			AddAllOutlines(currentlist);
+			
+			
+			// Set the position and rotation of the camera
+			cameraTransform.position = new Vector3((float)positions[cameraIndex], (float)0.746, (float)0.514);
+			cameraTransform.rotation = Quaternion.Euler((float)30.72, (float)0,(float)0);
+	}
+	public void ReactPut (int index) {
+		if(index<0||index>positions.Count-1||index==cameraIndex){
+			Debug.Log("index is wrong:"+index);
+			return;
+		}
+		PutToBowl(index);
 	}
 	public static void AddOutline(GameObject target)
 	{
@@ -86,7 +118,8 @@ public class col : MonoBehaviour
 			if(outline==null)
 				outline=target.AddComponent<Outline>();
 			outline.eraseRenderer=true;
-		}else 
+		}
+		else 
 		{
 			Debug.Log("Attempted to remove outline from a null GameObject.");
 		}
@@ -183,9 +216,9 @@ public class col : MonoBehaviour
 			bowls.Add(bowladded);
 			
 		}
-		void addAnimation( string name,float time,int index=99999,float rotateDegree=0f,Vector3 rotateAxis= default){
+		void addAnimation( string name,float time,int index=99999,GameObject obj=null, float rotateDegree=0f,Vector3 rotateAxis= default){
 			
-			if(!animationTimes.ContainsKey(name)){
+			if(!animationTimes.ContainsKey(name)){//init if the animation is new
 				rotateDegrees.Add(name,new List<float>());
 				animationObjectLists.Add(name,new List<List<GameObject>>());
 				animationRotateAxiss.Add(name,new List<Vector3>());
@@ -219,8 +252,15 @@ public class col : MonoBehaviour
 
 		listOfLists = new List<List<GameObject>>();
 		Debug.Log("listOfLists initialized");
-
-		mylist2=new string[] {"carrot","steak"};
+		mylist2=new string[] {};
+		if(!build){
+			Debug.Log("potatoes");
+			mylist2=new string[] {"potato","potato","potato","potato","potato","potato"};
+		} else {
+			
+			Debug.Log("no potatoes");
+		}
+		Debug.Log("mylist2:"+mylist2);
 		Debug.Log("mylist2 initialized");
 
 		bowl = Resources.Load<GameObject>("bowl");
@@ -248,6 +288,7 @@ public class col : MonoBehaviour
 		Debug.Log("First animation added");
 
 		addAnimation(time:0.3f,name:"put",rotateDegree:-130f,rotateAxis:Vector3.forward);
+		addAnimation(time:-1f,name:"put",rotateDegree:-130f,rotateAxis:Vector3.forward);
 		Debug.Log("Second animation added");
 		}
 
@@ -259,7 +300,18 @@ public class col : MonoBehaviour
 				Debug.Log(animationName+animationIndex);
 				Debug.Log(animationTimes==null);
 				//Debug.Log("b"+animationTimes[animationName][animationIndex]);
-				if(timer>=animationTimes[animationName][animationIndex]){//init
+				if(animationTimes[animationName][animationIndex]<0){
+					Destroy(rb.gameObject);
+					animationIndex++;
+					timer=0f;
+					if(animationIndex==animationObjectLists[animationName].Count){
+						Debug.Log("end of animation");
+						animationIndex=-1;
+						return;
+					}
+					
+				}
+				if(timer>=animationTimes[animationName][animationIndex]){
 					animationIndex++;
 					timer=0f;
 					if(animationIndex==animationObjectLists[animationName].Count){
@@ -270,7 +322,6 @@ public class col : MonoBehaviour
 					
 				}
 				//rb=animationObjectLists[animationName][animationIndex][0].GetComponent<Rigidbody>();//init
-				
 				float rotationSpeed=rotateDegrees[animationName][animationIndex]/animationTimes[animationName][animationIndex];//init
 
 				Vector3 rotationAxis = transform.TransformDirection(animationRotateAxiss[animationName][animationIndex]); 
@@ -286,11 +337,17 @@ public class col : MonoBehaviour
 		}
 
 		void RemoveAllOutlines(List<GameObject> list){
+			if(build){
+				return;
+			}
 			foreach (GameObject obj in list){
 				RemoveOutline(obj);
 			}
 		}
 		void AddAllOutlines(List<GameObject> list){
+			if(build){
+				return;
+			}
 			foreach (GameObject obj in list){
 				AddOutline(obj);
 			}
@@ -300,8 +357,8 @@ public class col : MonoBehaviour
 			TeleportGameObjects(currentlist,new Vector3((float)(positions[toIndex]+0.06), (float)-0.16, (float)2.225));
 			currentlist.RemoveAt(currentlist.Count - 1);
 			Transform cameraTransform = Camera.main.gameObject.transform;
-			cameraTransform.position = new Vector3((float)(positions[toIndex]), (float)0.946, (float)0.514);
-			cameraTransform.rotation = Quaternion.Euler((float)34.541, (float)0,(float)0);
+			cameraTransform.position = new Vector3((float)(positions[toIndex]), (float)0.746, (float)0.514);
+			cameraTransform.rotation = Quaternion.Euler((float)30.72, (float)0,(float)0);
 			rb=bowls[cameraIndex].GetComponent<Rigidbody>();
 			foreach (GameObject item in currentlist)
 			{
@@ -322,7 +379,11 @@ public class col : MonoBehaviour
 			{
 				for (int i = 0; i < mylist2.Length; i++)
 				{
-					addPrefabAndBowl(BundleLoader.Instance.Prefabs[mylist2[i]]);
+					if(BundleLoader.Instance.Prefabs[mylist2[i]]!=null){
+						addPrefabAndBowl(BundleLoader.Instance.Prefabs[mylist2[i]]);
+					} else{
+						Debug.Log(mylist2[i]+" is null");
+					}
 				}
 				hasLoaded = true;
 			}
@@ -348,7 +409,7 @@ public class col : MonoBehaviour
 				Transform cameraTransform = Camera.main.gameObject.transform;
         		// Set the position and rotation of the camera
 				cameraTransform.position = new Vector3((float)1.135, (float)0.746, (float)0.514);
-				cameraTransform.rotation = Quaternion.Euler((float)34.541, (float)0,(float)0);
+				cameraTransform.rotation = Quaternion.Euler((float)30.72, (float)0,(float)0);
 				Debug.Log("O");
 			}
 			if (Input.GetKeyDown(KeyCode.P))
@@ -374,7 +435,7 @@ public class col : MonoBehaviour
 				}
         		// Set the position and rotation of the camera
 				cameraTransform.position = new Vector3((float)positions[cameraIndex], (float)0.746, (float)0.514);
-				cameraTransform.rotation = Quaternion.Euler((float)34.541, (float)0,(float)0);
+				cameraTransform.rotation = Quaternion.Euler((float)30.72, (float)0,(float)0);
 				//Debug.Log("P");
 			}
 			if (Input.GetKeyDown(KeyCode.LeftArrow))
@@ -391,7 +452,7 @@ public class col : MonoBehaviour
 				AddAllOutlines(currentlist);
         		// Set the position and rotation of the camera
 				cameraTransform.position = new Vector3((float)positions[cameraIndex], (float)0.746, (float)0.514);
-				cameraTransform.rotation = Quaternion.Euler((float)34.541, (float)0,(float)0);
+				cameraTransform.rotation = Quaternion.Euler((float)30.72, (float)0,(float)0);
 				//Debug.Log("P");
 				
 			}
@@ -401,10 +462,11 @@ public class col : MonoBehaviour
 				pitch -= Input.GetAxis("Mouse Y");
 				camera.eulerAngles = new Vector3(TurnSpeed * pitch, TurnSpeed * yaw, 0.0f);
 			}
-			if (Input.GetMouseButtonUp(0))
+			if (Input.GetKeyDown(KeyCode.C))
             {
                 //Slice(3);
-                ReactSlice(6);
+				Debug.Log("C pressed");
+                ReactSlice(4);
                 //_isDragging = false;
             }
 		}

@@ -34,6 +34,7 @@ namespace DynamicMeshCutter
         protected override void Update()
         {
             base.Update();
+            /*
             if(Input.GetMouseButtonDown(1))
             {
                 Ray ray = Camera.main.ScreenPointToRay(Input.mousePosition);  
@@ -57,7 +58,7 @@ namespace DynamicMeshCutter
                 var mousePos = new Vector3(Input.mousePosition.x, Input.mousePosition.y, Camera.main.nearClipPlane + 0.05f);
                 _from = Camera.main.ScreenToWorldPoint(mousePos);
             }
-/*
+
             if (_isDragging)
             {
                 var mousePos = new Vector3(Input.mousePosition.x, Input.mousePosition.y, Camera.main.nearClipPlane + 0.05f);
@@ -68,13 +69,13 @@ namespace DynamicMeshCutter
             {
                 VisualizeLine(false);
             }
-*/
+
             if (Input.GetMouseButtonUp(0))
             {
                 //Slice(3);
-                Slice(6);
-                _isDragging = false;
-            }
+                //Slice(6);
+                //_isDragging = false;
+            }*/
         }
 
 

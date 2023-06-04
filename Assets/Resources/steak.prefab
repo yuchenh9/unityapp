@@ -99,7 +99,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   GameobjectRoot: {fileID: 3972449333601344309}
-  OverrideFaceMaterial: {fileID: 0}
+  OverrideFaceMaterial: {fileID: 2100000, guid: 773c816292545cc45bec6c4001ca5b8e, type: 2}
   SeparateMeshes: 0
   ApplyTranslation: 1
   DefaultBehaviour: 0000000000000000

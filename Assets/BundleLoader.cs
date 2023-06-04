@@ -33,7 +33,7 @@ public class BundleLoader : MonoBehaviour
             yield return null;
 
         Debug.Log("Starting download...");
-        using (UnityWebRequest www = UnityWebRequestAssetBundle.GetAssetBundle("http://localhost:3001/WebGL/ball1"))
+        using (UnityWebRequest www = UnityWebRequestAssetBundle.GetAssetBundle("http://localhost:3001/WebGL/thebundle"))
         {
             yield return www.SendWebRequest();
 
