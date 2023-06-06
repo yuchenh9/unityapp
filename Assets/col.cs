@@ -257,7 +257,7 @@ public class col : MonoBehaviour
 			Debug.Log("potatoes");
 			mylist2=new string[] {"potato","potato","potato","potato","potato","potato"};
 		} else {
-			
+			mylist2=new string[] {"potato","potato"};
 			Debug.Log("no potatoes");
 		}
 		Debug.Log("mylist2:"+mylist2);
@@ -379,10 +379,19 @@ public class col : MonoBehaviour
 			{
 				for (int i = 0; i < mylist2.Length; i++)
 				{
+					
 					if(BundleLoader.Instance.Prefabs[mylist2[i]]!=null){
 						addPrefabAndBowl(BundleLoader.Instance.Prefabs[mylist2[i]]);
 					} else{
 						Debug.Log(mylist2[i]+" is null");
+					}
+					if(i==0){
+						Transform cameraTransform = Camera.main.gameObject.transform;
+						cameraTransform.position = new Vector3((float)positions[0], (float)0.746, (float)0.514);
+						cameraTransform.rotation = Quaternion.Euler((float)30.72, (float)0,(float)0);
+						cameraIndex=0;
+									
+						currentlist=listOfLists[cameraIndex];
 					}
 				}
 				hasLoaded = true;
@@ -469,6 +478,16 @@ public class col : MonoBehaviour
                 ReactSlice(4);
                 //_isDragging = false;
             }
+			if (Input.GetMouseButton(0))
+			{
+                ReactSlice(4);
+			}
+			/*
+			if (Input.GetMouseButtonUp(0))
+    {
+        isMouseClicked = false;
+    }
+	*/
 		}
 
 }
