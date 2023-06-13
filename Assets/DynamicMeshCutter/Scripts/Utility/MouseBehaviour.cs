@@ -91,7 +91,7 @@ namespace DynamicMeshCutter
                 return;
             }
             
-            List<GameObject> currentlist = col.Instance.currentlist;
+            List<GameObject> currentlist = gamecontroller.Instance.currentlist;
             int index = -1;
 
             for (int i = 0; i < currentlist.Count; i++)
@@ -162,7 +162,7 @@ namespace DynamicMeshCutter
         {
                 //Debug.Log("cut");
             Plane plane = new Plane(_from, _to, Camera.main.transform.position);
-            List<GameObject> currentlist = col.Instance.currentlist;
+            List<GameObject> currentlist = gamecontroller.Instance.currentlist;
             foreach (GameObject root in currentlist)//
             {
                 //Debug.Log("tag:"+root.tag+root);

@@ -178,7 +178,7 @@ namespace DynamicMeshCutter
                 Vector3 point = points.Dequeue();
                 Vector3 normal = normals.Dequeue();
                 //GameObject[] roots = GameObject.FindGameObjectsWithTag("0");
-                List<GameObject> currentlist = col.Instance.currentlist;
+                List<GameObject> currentlist = gamecontroller.Instance.currentlist;
 
                 foreach (GameObject root in currentlist)
                 {
